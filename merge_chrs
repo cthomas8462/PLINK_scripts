@@ -1,0 +1,6 @@
+#if all files are in same folder..
+dir -1 > allfiles.txt
+#switch around names so they are formatted like http://zzz.bwh.harvard.edu/plink/dataman.shtml#mergelist
+
+
+
