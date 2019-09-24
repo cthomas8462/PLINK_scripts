@@ -49,7 +49,7 @@ PCA1, PCA2, PCA3, PCA4, PCA5, PCA6, PCA7, PCA8, PCA9, PCA10 \
 --interaction \
 --parameters 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,$k \
 --tests 1,18 \
---out GWAS_results_09242019/"$k"_par"$j"_chr"$i"_09242019
+--out GWAS_results_09242019/"$j"_par"$k"_chr"$i"_09242019
 
 done
 done
