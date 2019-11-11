@@ -33,25 +33,47 @@ par<-c("22", "24")
 possible_dirs<-sprintf("./%s_par%s", phenotypes, par)
 
 dirs_exist<-possible_dirs[possible_dirs %in% dirs]
-    
+
+pdf(file= test.pdf)
+
 for (i in seq_along(dirs_exist)){
   if(sum(grepl("*full.assoc.logistic", list.files(path= dirs_exist[i])))==1){
     filename<-paste(dirs_exist[i], "/", grep("*full.assoc.logistic", list.files(path= dirs_exist[i]), value = TRUE), sep="")
-               
+      #For par 22
+      if(grepl("par22", filename)){
+      data<-read.table(filename, header=TRUE, stringsAsFactors=FALSE)
+      data<--data%>%filter(TEST == "ADDxweekly_oily_fish")
+      data<-data %>% select(CHR, SNP, BP, P)
+      data[,-2]<-sapply(data[,-2], as.numeric)
+      data<-drop_na(data)
+      manhattan(data, 
+          main = "Title goes here", 
+          ylim = c(0, 10), cex = 0.6, 
+          annotatePval = 0.00001, annotateTop = FALSE,
+          cex.axis = 0.9, col = c("red", "black"), 
+          suggestiveline = -log10(1e-05), genomewideline = -log10(5e-08), 
+)}
+      else if(grepl("par24", filename)){
+      data<--data%>%filter(TEST == "ADDxfish_oil_initial")
+      data<-data %>% select(CHR, SNP, BP, P)
+      data[,-2]<-sapply(data[,-2], as.numeric)
+      data<-drop_na(data)
+      manhattan(data, 
+          main = "Title goes here", 
+          ylim = c(0, 10), cex = 0.6, 
+          annotatePval = 0.00001, annotateTop = FALSE,
+          cex.axis = 0.9, col = c("red", "black"), 
+          suggestiveline = -log10(1e-05), genomewideline = -log10(5e-08), 
+)}
+      
+      
+      
+      
+      
+      
             }}
-
+dev.off()
         
-        
-"*full.assoc.logistic" %in% list.files(dirs_exist)
-    
-full.assoc.logistic
-    
-#check if folder exists in dirs
-
-
-}
-}
-
 
 
 
