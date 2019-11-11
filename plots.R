@@ -28,7 +28,30 @@ phenotypes<-c("Depress_2wk", "breast_cancer", "prostate_cancer",
 "cardiac.12", "cardiac.13", "cardiac.14", "cardiac.15", "cardiac.16",
 "cardiac.17", "cardiac.18", "cardiac.19", "cardiac.20", "cardiac.21")
 
+par<-c("22", "24")
+
+possible_dirs<-sprintf("./%s_par%s", phenotypes, par)
+
+dirs_exist<-possible_dirs[possible_dirs %in% dirs]
+    
+for (i in seq_along(dirs_exist)){
+  if(sum(grepl("*full.assoc.logistic", list.files(path= dirs_exist[i])))==1){
+    filename<-paste(dirs_exist[i], "/", grep("*full.assoc.logistic", list.files(path= dirs_exist[i]), value = TRUE), sep="")
+               
+            }}
+
+        
+        
+"*full.assoc.logistic" %in% list.files(dirs_exist)
+    
+full.assoc.logistic
+    
+#check if folder exists in dirs
 
 
-data<-read.table("ukb_chr20_vif100.assoc.logistic", 
-                  header = TRUE, stringsAsFactors = FALSE)
+}
+}
+
+
+
+
