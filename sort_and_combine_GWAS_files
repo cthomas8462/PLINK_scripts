@@ -38,6 +38,8 @@ mv "$j"_par"$k"_chr"$i"*ass* "$j"_par"$k" 2>/dev/null
 mkdir log_and_nosex 2>/dev/null
 mv "$j"_par"$k"_chr"$i"*log* log_and_nosex 2>/dev/null
 mv "$j"_par"$k"_chr"$i"*nosex* log_and_nosex 2>/dev/null
+mv "$j"_par"$k"_chr"$i"*irem* log_and_nosex 2>/dev/null
+mv "$j"_par"$k"_chr"$i"*.hh* log_and_nosex 2>/dev/null
 
 done
 done
@@ -53,21 +55,35 @@ for j in ${phenotypes[@]}
 		for k in ${par[*]}
 			do
 cd /scratch/mf91122/UKBimputation/GWAS_results_11072019
+#if directory exists then go into that directory
 if [ -d "$j"_par"$k" ]
-then
-cd "$j"_par"$k"
+	then
+	cd "$j"_par"$k"
 
-filecount=$(find . -maxdepth 1 -type f | wc -l)
-#echo filecount for "$j"_par"$k" is "${filecount}"
+	filecount=$(find . -maxdepth 1 -type f | wc -l)
 
 
-if [ "$filecount" == 24 ]
-then
-	echo all "${filecount}" files in "$j"_par"$k"
-else
-	echo only "${filecount}" files in "$j"_par"$k"
+	if [ "$filecount" == 24 ]
+	then
+		echo Combining "${filecount}" files in "$j"_par"$k"
+		#cat * > "$j"_par"$k"_full.assoc.logistic
+	fi	
+	
+	if ([ "$filecount" > 24 ] && [ "$k" == 22 ])
+	then
+			awk -F " " '{if ($5=="ADDxweekly_oily_fish")print $0}' "$j"_par22_full.assoc.logistic > \
+				"$j"_par22_fullb.assoc.logistic
+        		awk '{print $1,$2,$3,$9}' "$j"_par22_fullb.assoc.logistic > \
+		        	"$j"_par22_fullc.assoc.logistic
+	elif ([ "$filecount" > 24 ] && [ "$k" == 24 ])
+	then
+			awk -F " " '{if ($5=="ADDxfish_oil_initial")print $0}' "$j"_par24_full.assoc.logistic > \
+                        	"$j"_par24_fullb.assoc.logistic
+                	awk '{print $1,$2,$3,$9}' "$j"_par24_fullb.assoc.logistic > \
+                        	"$j"_par24_fullc.assoc.logistic
+	else 
+		echo There are "${filecount}" files in "$j"_par"$k"
+	fi
 fi
-fi
-
 done
 done
