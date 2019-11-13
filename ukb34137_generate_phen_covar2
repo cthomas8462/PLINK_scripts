@@ -1,0 +1,399 @@
+setwd("/Users/calvin/Desktop/MF/R_files/")
+source('ukb34137_loaddata.r') #generates bd (UKB dataset)
+library(plyr)
+library(dplyr)
+library(tidyverse)
+bd_new <- read.table("ukb37330.tab", 
+                     header=TRUE, sep="\t")
+bd_newer<- read.table("ukb38039.tab",
+                      header=TRUE, sep="\t")
+
+# 24HR people only. This code works-----------------------------------
+# daycols<-c("f.20080.0.0", "f.20080.1.0", "f.20080.2.0", 
+#            "f.20080.3.0", "f.20080.4.0")
+# bd1<-bd
+# #Change all the values to characters for easier manipulation
+# bd1<-apply(bd1[,daycols], 2, as.character)
+# #Change NA's to zeros and days to 1's
+# bd1[(is.na(bd1[,daycols]))]<-0
+# bd1[bd1[,daycols]!="0"] <-1
+# #Change these back to numeric
+# bd1<-apply(bd1[,daycols], 2, as.integer)
+# #Now make a new column, everyone with rowSums zero write FALSE
+# #and those with >0 write TRUE
+# sum<-apply(bd1[,daycols], 1, sum)
+# bd1<-as.data.frame(bd1)
+# bd1<-bd1 %>% mutate (took_24HR = sum)
+# bd1<-bd1%>% mutate(took_24HR = replace(took_24HR, took_24HR>0, "Yes")) %>%
+#     mutate(took_24HR = replace(took_24HR, took_24HR==0, "No"))
+# sum(bd1$took_24HR=="Yes") #[1] 211018 **SUCCESS**
+
+
+
+
+# Generate pheno file -------------------------------------------
+
+bd_pheno<- bd %>% select(f.eid, f.31.0.0, f.21000.0.0, f.40007.0.0, f.2050.0.0,
+                       f.30690.0.0, f.30780.0.0, f.30870.0.0, f.22020.0.0,
+                       f.22027.0.0, f.22019.0.0, 
+                       f.22021.0.0, f.22006.0.0,
+                       f.22001.0.0)
+
+colnames(bd_pheno)<-c("FID", "Sex", "Race", "Death_Age", "Depress_2wk",
+                    "Tot_Chol", "LDL", "TAGs", "Used_in_PCA",
+                    "Outliers_for_het_or_missing", "SexchrAneuploidy",
+                    "Genetic_kinship", "Genetic_ethnic_grouping",
+                    "Genetic_Sex")
+bd_pheno<-as_tibble(bd_pheno)
+
+#Filter by people who took 24HR only
+# bd_pheno$took_24HR<- bd1$took_24HR
+# bd_pheno<-bd_pheno%>%filter(took_24HR == "Yes")
+
+##Fix up columns from left to right
+
+#Sex
+bd_pheno$Sex<-mapvalues(as.character(bd_pheno$Sex), 
+                        c("Male", "Female"), c(1,2))
+
+#Death_Age
+bd_pheno$Death_Age<-replace_na(bd_pheno$Death_Age, "-9")
+
+
+## Depression diagnosis--------------------------------
+
+# Change to binary 0- no depression phenotype; 1 - yes phenotype
+bd_pheno$Depress_2wk<-replace_na(as.character(bd_pheno$Depress_2wk), "-9")
+
+depression_original<-c("Prefer not to answer", "Do not know",
+                       "Not at all", 
+                       "Several days", "More than half the days",
+                       "Nearly every day")
+depression_recode<-c(-9,-9,
+                     0,
+                     1,1,1)
+
+bd_pheno$Depress_2wk<-mapvalues(bd_pheno$Depress_2wk, 
+          depression_original, depression_recode)
+
+
+##Cancer
+#coding_cancer<-read_tsv("cancercoding.tsv")
+cancercols<-c("f.20001.0.0", "f.20001.0.1", "f.20001.0.2", 
+              "f.20001.0.3", "f.20001.0.4")
+#head(bd[,cancercols],100)
+
+
+cancercodes<-c(1002, 1044, 1020, 1022, 1024, 1032, 1062)
+names(cancercodes)<-c("breast_cancer", "prostate_cancer", "LI_colorectal_cancer", 
+  "colon_sigmoid_cancer", "liver_cancer", "brain_cancer", "squamous_cell")
+
+df<-data.frame(matrix(ncol=length(cancercodes), nrow= nrow(bd_new)))
+colnames(df)<-names(cancercodes)
+
+for (i in seq_along(cancercodes)){
+  vec<-rowSums(sapply(bd_new[,cancercols],
+                      function(x) grepl(cancercodes[i], x, ignore.case = TRUE)
+  ))>0
+  df[,i]<-vec
+}
+
+df$f.eid<-bd_new$f.eid
+bd_pheno<-bd_pheno%>%inner_join(df, c("FID" = "f.eid"))
+
+##Noncancer
+#coding_noncancer<-read_tsv("noncancercoding.tsv")
+
+#Cardiac stuff
+cardiaccodes<-c(1065, 1066, 1067, 1068, 1072, 1073, 1074, 1075, 1076, 1077, 
+                1078,1079, 1080, 1081, 1082, 1083, 1086, 1087, 1088, 1093, 1094)
+names(cardiaccodes)<-sprintf("cardiac.%s", 1:21)
+cardiaccodes
+
+cardiaccols<-sprintf("f.20002.0.%s", 0:33)
+
+df2<-data.frame(matrix(ncol=length(cardiaccodes), nrow= nrow(bd_new)))
+colnames(df2)<-names(cardiaccodes)
+
+for (i in seq_along(cardiaccodes)){
+  vec<-rowSums(sapply(bd_new[,cardiaccols],
+                      function(x) grepl(cardiaccodes[i], x, ignore.case = TRUE)
+  ))>0
+  df2[,i]<-vec
+}
+sum(df2$cardiac.1)
+
+df2$f.eid<-bd_new$f.eid
+bd_pheno<-bd_pheno%>%inner_join(df2, c("FID" = "f.eid"))
+
+#Function: manyColsToDummy=======================================
+
+#manyColsToDummy(cardiaccodes, bd_new[,cardiaccols], "test_output4")
+
+manyColsToDummy<-function(search_terms, search_columns,
+                          output_table){
+  #initialize output table
+  temp_table<-data.frame(matrix(ncol=length(search_terms),
+                                nrow= nrow(search_columns)))
+  colnames(temp_table)<-search_terms
+  
+  #make table
+  for (i in 1:length(search_terms)){
+    vec<-rowSums(sapply(search_columns,
+                        function(x) grepl(search_terms[i], x, ignore.case = TRUE)
+    ))>0
+    temp_table[,i]<-vec
+  }
+  temp_table<-sapply(temp_table, as.integer, as.logical)
+  temp_table<-as.data.frame(temp_table)
+  assign(x = output_table, value = temp_table, envir = globalenv())
+}
+
+
+
+
+#Noncancer disease codes======================================
+noncancercodes<-c(1461, 1462, 1464, 1223)
+noncancercols<-sprintf("f.20002.0.%s", 0:33)
+names(noncancercodes)<-c("inflam_bowel", "crohns", "rhematoid_arth", "T2D")
+
+df<-data.frame(matrix(ncol=length(noncancercodes), nrow= nrow(bd_new)))
+colnames(df)<-names(noncancercodes)
+
+for (i in seq_along(noncancercodes)){
+  vec<-rowSums(sapply(bd_new[,noncancercols],
+                      function(x) grepl(noncancercodes[i], x, ignore.case = TRUE)
+  ))>0
+  df[,i]<-vec
+}
+
+df$f.eid<-bd_new$f.eid
+bd_pheno<-bd_pheno%>%inner_join(df, c("FID" = "f.eid"))
+
+
+#Map values 0 and 1 to TRUE/FALSE
+bd_pheno[,9:40]<-sapply(bd_pheno[,9:40], mapvalues, c(TRUE, FALSE), c(1, 0))
+
+#QC filtering
+bd_pheno<-bd_pheno%>%filter(Race == "British")
+
+
+
+
+# Finalize/write  pheno file -----------------------------------------
+
+bd_pheno$IID<-bd_pheno$FID
+bd_pheno<-bd_pheno%>%select(FID, IID, Sex, everything())
+#To write, uncomment this:
+write.table(bd_pheno, file= "pheno_10012019.txt", row.names = FALSE, 
+            quote = FALSE)
+
+
+#================================================================ #
+#================================================================ #
+#================================================================ #
+
+# Generate covar file -------------------------------------------
+
+bd_covar<- bd %>% select(f.eid, f.31.0.0, f.21003.0.0, f.21000.0.0,  
+                          f.189.0.0, f.1329.0.0)
+
+colnames(bd_covar)<-c("FID", "Sex", "Age", "Race", 
+                      "Townsend", "weekly_oily_fish")
+bd_covar<-as_tibble(bd_covar)
+
+BMI<-bd_new%>%select(f.eid, f.21001.0.0)
+bd_covar<-bd_covar%>%inner_join(BMI, by = c("FID" = "f.eid"))
+bd_covar<-rename(bd_covar, "BMI" = "f.21001.0.0")
+
+pregnant<-bd_new%>%select(f.eid, f.3140.0.0)
+bd_covar<-bd_covar%>%inner_join(pregnant, by = c("FID" = "f.eid"))
+bd_covar<-rename(bd_covar, "Pregnant" = "f.3140.0.0")
+bd_covar$Pregnant<-mapvalues(bd_covar$Pregnant, c(NA, 0, 1, 2), c(0, 0, 1, 0))
+
+##Fix up columns from left to right
+
+#Sex
+bd_covar$Sex<-mapvalues(as.character(bd_covar$Sex), 
+                      c("Male", "Female"), c(1,2))
+
+
+#weekly_oily fish
+bd_covar$weekly_oily_fish<-mapvalues(bd_covar$weekly_oily_fish, c("Never", 
+        "Less than once a week", "Once a week", "2-4 times a week",
+        "5-6 times a week", "Once or more daily", "Do not know",
+        "Prefer not to answer"), c(0,1,2,3,4,5,-9,-9))
+
+#Add fish oil initial assessment column=============================
+initialfishcols<-c("f.6179.0.0","f.6179.0.1","f.6179.0.2",
+                   "f.6179.0.3", "f.6179.0.4")
+
+bd_covar$fish_oil_initial<-rowSums(sapply(bd_new[,initialfishcols],
+               function(x) grepl(1, x)))>0
+sum(bd_covar$fish_oil_initial, na.rm = TRUE)
+#[1] 155826 : correct
+
+
+
+#Servings 
+
+
+
+
+
+# Add fish oil 24HR column---do this BEFORE filtering data set--------
+# Or else rewrite to use a join.
+eg<-expand.grid(seq(0,4), seq(0,20))
+fish_oil_cols<-sprintf("f.20084.%s.%s", eg[,1], eg[,2])
+
+bd_temp<-bd%>%
+    mutate(Fish_Oil_Supp = rowSums(
+        sapply(bd[,fish_oil_cols],
+               function(x) grepl("Fish oil", x, ignore.case = TRUE)
+        ))>0
+    ) %>% select(Fish_Oil_Supp)
+
+
+
+
+bd_covar$fish_oil_24HR<-bd_temp$Fish_Oil_Supp
+bd_covar$fish_oil_24HR<-mapvalues(bd_covar$Fish_Oil_Supp, 
+                                  c(TRUE, FALSE), c(1, 0))
+
+
+#24HR Oily Fish===============================
+#Field 103140 [fish consumer] determines who was asked in 103160
+
+# fish_cols<-c("f.103140.0.0", "f.103140.1.0", "f.103140.2.0", 
+#                  "f.103140.3.0", "f.103140.4.0") 
+# consumeroffish<-bd[,fish_cols]
+# consumeroffish<-consumeroffish%>% 
+#     mutate(count_na = apply(., 1, count_na))
+# 
+# nrow(consumeroffish[consumeroffish$count_na ==5,])
+# #[1] 291509
+
+#"How many servings of oily fish (e.g. salmon, tinned salmon, herring, 
+#mackerel, sardines, fresh tuna steak) did you have?"
+levels(bd$f.103160.0.0)
+# [1] "1"    "2"    "3"    "4+"   "half"
+
+oily_cols<-c("f.103160.0.0", "f.103160.1.0",
+            "f.103160.2.0", "f.103160.3.0", "f.103160.4.0")
+
+oily_fish<-bd[,oily_cols]
+
+#replace "half" with 0.5
+oily_fish$f.103160.0.0<-mapvalues(oily_fish$f.103160.0.0, "half", "0.5")
+oily_fish$f.103160.1.0<-mapvalues(oily_fish$f.103160.1.0, "half", "0.5")
+oily_fish$f.103160.2.0<-mapvalues(oily_fish$f.103160.2.0, "half", "0.5")
+oily_fish$f.103160.3.0<-mapvalues(oily_fish$f.103160.3.0, "half", "0.5")
+oily_fish$f.103160.4.0<-mapvalues(oily_fish$f.103160.4.0, "half", "0.5")
+
+#Add columns for avg fish servings and number of NA responses
+count_na <- function(x) sum(is.na(x))
+oily_fish<-oily_fish%>% mutate(count_na = apply(., 1, count_na), 
+                               answers = 5-count_na)
+
+#Convert factors to numeric
+oily_fish$f.103160.0.0<-as.numeric(levels(oily_fish$f.103160.0.0))[oily_fish$f.103160.0.0]
+oily_fish$f.103160.1.0<-as.numeric(levels(oily_fish$f.103160.1.0))[oily_fish$f.103160.1.0]
+oily_fish$f.103160.2.0<-as.numeric(levels(oily_fish$f.103160.2.0))[oily_fish$f.103160.2.0]
+oily_fish$f.103160.3.0<-as.numeric(levels(oily_fish$f.103160.3.0))[oily_fish$f.103160.3.0]
+oily_fish$f.103160.4.0<-as.numeric(levels(oily_fish$f.103160.4.0))[oily_fish$f.103160.4.0]
+
+sum<-oily_fish%>% select(f.103160.0.0, f.103160.1.0, f.103160.2.0, 
+                    f.103160.3.0, f.103160.4.0) %>%
+    mutate(sum = rowSums(., na.rm=TRUE)) %>%select(sum)
+
+oily_fish$sum<-as.double(unlist(sum))
+
+#Number of oily fish servings is total servings divided by number of
+#times survey was completed
+avg_oily_fish_servings<-oily_fish$sum/oily_fish$answers
+
+avg_oily_fish_servings<-replace_na(avg_oily_fish_servings, 0)
+
+#add oily fish to covar data frame
+bd_covar$avg_oily_fish_servings<-
+    avg_oily_fish_servings #only relevant for ppl who took 24HR!
+
+#Special diet followed: column f.20086
+#**ONLY AVAILABLE FOR 24HR participants
+
+
+
+#Replace T/F with numbers (0,1)=======================
+bd_covar$fish_oil_initial<-mapvalues(bd_covar$fish_oil_initial, 
+                                  c(TRUE, FALSE), c(1, 0))
+
+#Add statins
+
+
+
+
+# Add PCs -------------------------------------------------------
+
+cols_PCA<-c("f.eid", sprintf("f.22009.0.%s", 1:40))
+PCA<-bd[,cols_PCA]
+colnames(PCA)<-c("FID", sprintf("PCA%s", 1:40))
+
+bd_covar<-bd_covar %>% inner_join(PCA, by= "FID")
+
+
+
+
+#Filter by people who took 24HR only----------------------------------
+# bd_covar$took_24HR<- bd1$took_24HR
+# bd_covar<-bd_covar%>%filter(took_24HR == "Yes")
+
+#Race--British only. What about genetic race? Ignoring for now
+bd_covar<-bd_covar%>%filter(Race == "British")
+
+
+
+##Finalize/write  covar file ----------------------------------------
+
+bd_covar$IID<-bd_covar$FID
+bd_covar<-bd_covar%>% select(FID, IID, everything())
+
+#To write, uncomment this:
+write.table(bd_covar, file= "covar_10012019.txt", 
+         row.names = FALSE, quote = FALSE)
+
+
+
+# Add statins ---------------------------------------------------
+
+covar<-read.table("covar_10012019.txt", header = TRUE, 
+                  stringsAsFactors = FALSE)
+
+statincols<-c("f.eid", sprintf("f.20003.0.%s", 0:47))
+statincodes<-c(1140861958, 1140888594, 1140888648, 1140910632, 
+               1140910654, 1141146234, 1141192410)
+names(statincodes)<-c("simvastatin", "fluvastatin", "prevastatin", 
+                      "eptastatin", "velastatin", "atorvastatin", 
+                      "rosuvastatin")
+
+manyColsToDummy(statincodes, bd_newer[,statincols], "statinoutput")
+colnames(statinoutput)<-names(statincodes)
+statinoutput$FID<-bd_newer$f.eid
+covar<-left_join(covar, statinoutput, by= "FID")
+
+write.table(covar, file= "covar_10292019.txt", 
+            row.names = FALSE, quote = FALSE)
+
+
+# Combine statin columns ----------------------------------------
+
+covar<-read.table("covar_10292019.txt", header = TRUE, 
+                  stringsAsFactors = FALSE)
+covar$statins<-apply(covar[,51:57], 1, sum, na.rm=TRUE)
+covar$statins[covar$statins==2]<-1
+covar<-covar[,-(51:58)]
+covar
+
+write.table(covar, file= "covar_11042019.txt", 
+            row.names = FALSE, quote = FALSE)
+
+
