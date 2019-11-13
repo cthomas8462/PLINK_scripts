@@ -33,17 +33,17 @@ bd_newer<- read.table("ukb38039.tab",
 
 # Generate pheno file -------------------------------------------
 
-bd_pheno<- bd %>% select(f.eid, f.31.0.0, f.21000.0.0, f.40007.0.0, f.2050.0.0,
+bd_pheno<- bd %>% select(f.eid, f.31.0.0, f.22001.0.0, f.21000.0.0, 
+                         f.40007.0.0, f.2050.0.0,
                        f.30690.0.0, f.30780.0.0, f.30870.0.0, f.22020.0.0,
                        f.22027.0.0, f.22019.0.0, 
-                       f.22021.0.0, f.22006.0.0,
-                       f.22001.0.0)
+                       f.22021.0.0, f.22006.0.0)
 
-colnames(bd_pheno)<-c("FID", "Sex", "Race", "Death_Age", "Depress_2wk",
+colnames(bd_pheno)<-c("FID", "Sex", "Genetic_Sex", "Race", 
+                      "Death_Age", "Depress_2wk",
                     "Tot_Chol", "LDL", "TAGs", "Used_in_PCA",
                     "Outliers_for_het_or_missing", "SexchrAneuploidy",
-                    "Genetic_kinship", "Genetic_ethnic_grouping",
-                    "Genetic_Sex")
+                    "Genetic_kinship", "Genetic_ethnic_grouping")
 bd_pheno<-as_tibble(bd_pheno)
 
 #Filter by people who took 24HR only
@@ -54,6 +54,8 @@ bd_pheno<-as_tibble(bd_pheno)
 
 #Sex
 bd_pheno$Sex<-mapvalues(as.character(bd_pheno$Sex), 
+                        c("Male", "Female"), c(1,2))
+bd_pheno$Genetic_Sex<-mapvalues(as.character(bd_pheno$Genetic_Sex), 
                         c("Male", "Female"), c(1,2))
 
 #Death_Age
@@ -172,13 +174,20 @@ bd_pheno<-bd_pheno%>%inner_join(df, c("FID" = "f.eid"))
 
 
 #Map values 0 and 1 to TRUE/FALSE
-bd_pheno[,9:40]<-sapply(bd_pheno[,9:40], mapvalues, c(TRUE, FALSE), c(1, 0))
+#bd_pheno[,9:40]<-sapply(bd_pheno[,9:40], mapvalues, c(TRUE, FALSE), c(1, 0))
 
 #QC filtering
-bd_pheno<-bd_pheno%>%filter(Race == "British")
-
-
-
+bd_pheno<-bd_pheno%>%filter(Genetic_ethnic_grouping == "Caucasian")
+bd_pheno<-bd_pheno%>%filter(Used_in_PCA == "Yes")
+bd_pheno<-bd_pheno%>%
+  filter(is.na(Outliers_for_het_or_missing) | Outliers_for_het_or_missing !="Yes") 
+bd_pheno<-bd_pheno%>%
+  filter(is.na(SexchrAneuploidy) | SexchrAneuploidy != "Yes")
+bd_pheno<- bd_pheno%>%
+  filter(is.na(Genetic_kinship) | 
+   Genetic_kinship != "Ten or more third-degree relatives identified")
+#If Sex does not equal genetic sex, exclude participant
+bd_pheno<-bd_pheno[bd_pheno$Sex == bd_pheno$Genetic_Sex,] #remove 378 individuals
 
 # Finalize/write  pheno file -----------------------------------------
 
