@@ -8,7 +8,7 @@ bd_new <- read.table("ukb37330.tab",
 bd_newer<- read.table("ukb38039.tab",
                       header=TRUE, sep="\t")
 
-# 24HR people only. This code works-----------------------------------
+# Find 24HR people only. This code works-----------------------------------
 # daycols<-c("f.20080.0.0", "f.20080.1.0", "f.20080.2.0", 
 #            "f.20080.3.0", "f.20080.4.0")
 # bd1<-bd
@@ -174,7 +174,8 @@ bd_pheno<-bd_pheno%>%inner_join(df, c("FID" = "f.eid"))
 
 
 #Map values 0 and 1 to TRUE/FALSE
-#bd_pheno[,9:40]<-sapply(bd_pheno[,9:40], mapvalues, c(TRUE, FALSE), c(1, 0))
+bd_pheno[,15:ncol(bd_pheno)]<-
+ sapply(bd_pheno[,15:ncol(bd_pheno)], mapvalues, c(TRUE, FALSE), c(1, 0))
 
 #QC filtering
 bd_pheno<-bd_pheno%>%filter(Genetic_ethnic_grouping == "Caucasian")
@@ -189,12 +190,23 @@ bd_pheno<- bd_pheno%>%
 #If Sex does not equal genetic sex, exclude participant
 bd_pheno<-bd_pheno[bd_pheno$Sex == bd_pheno$Genetic_Sex,] #remove 378 individuals
 
+#From maximum_set_of_unrelated_individuals.MF.pl output
+max_unrelated<-read.table("ukb48818_rel_s488282_output.dat")
+max_unrelated<-as.integer(unlist(max_unrelated))
+bd_pheno<-bd_pheno%>%filter(!FID %in% max_unrelated)
+bd_pheno
+
 # Finalize/write  pheno file -----------------------------------------
 
 bd_pheno$IID<-bd_pheno$FID
+bd_pheno<-bd_pheno%>%select(-Race, -Genetic_Sex, -Used_in_PCA, 
+                -Outliers_for_het_or_missing, -SexchrAneuploidy,
+                -Genetic_kinship, -Genetic_ethnic_grouping)
+
 bd_pheno<-bd_pheno%>%select(FID, IID, Sex, everything())
+
 #To write, uncomment this:
-write.table(bd_pheno, file= "pheno_10012019.txt", row.names = FALSE, 
+write.table(bd_pheno, file= "pheno_11142019.txt", row.names = FALSE, 
             quote = FALSE)
 
 
