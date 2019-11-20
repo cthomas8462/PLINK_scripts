@@ -1,13 +1,4 @@
-#PBS -S /bin/bash
-#PBS -q ye_q
-#PBS -N plots
-#PBS -l nodes=1:ppn=4
-#PBS -l walltime=1:00:00:00
-#PBS -l mem=20gb
-
-#PBS -M michaelfrancis@uga.edu
-#PBS -m abe
-
+#MAKE MANHATTAN PLOTS FOR COMPLETED GWAS PHENOTYPES
 #Load R
 #ml R/3.6.1-foss-2018a-X11-20180131-GACRC
 
@@ -15,7 +6,7 @@ library(qqman)
 library(plyr)
 library(tidyverse)
 
-setwd("/scratch/mf91122/UKBimputation/GWAS_results_11072019")
+setwd("/scratch/mf91122/UKBimputation/GWAS_results_11142019")
 
 dirs<-list.dirs(path = ".")
 
@@ -30,12 +21,14 @@ phenotypes<-c("Depress_2wk", "breast_cancer", "prostate_cancer",
 
 par<-c("22", "24")
 
-possible_dirs<-sprintf("./%s_par%s", phenotypes, par)
+eg<-expand.grid(phenotypes, par)
+possible_dirs<-sprintf("./%s_par%s", eg[,1], eg[,2])
 
 dirs_exist<-possible_dirs[possible_dirs %in% dirs]
 
-png(file= "test5.png")
-par(mfrow=c(2,2))
+pngfilename=paste("./plotoutput/manhattan", Sys.Date(), sep="_")
+png(file= pngfilename)
+par(mfrow=c(3,2))
 
 for (i in seq_along(dirs_exist)){
   if(sum(grepl("*fullc.assoc.logistic", list.files(path= dirs_exist[i])))==1){
