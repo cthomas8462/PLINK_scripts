@@ -8,7 +8,7 @@
 #PBS -M michaelfrancis@uga.edu
 #PBS -m abe
 
-cd /scratch/mf91122/UKBimputation/GWAS_results_11072019
+cd /scratch/mf91122/UKBimputation/GWAS_results_11142019
 
 phenotypes=("Depress_2wk" "breast_cancer" "prostate_cancer" \ 
 "LI_colorectal_cancer" "colon_sigmoid_cancer" "liver_cancer" \ 
@@ -24,7 +24,7 @@ chr=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X XY)
 par=(22 24)
 
 #sort data
-
+echo Sorting data...
 for i in ${chr[*]}
         do
 	for j in ${phenotypes[@]} 
@@ -45,7 +45,7 @@ done
 done
 done
 
-cd /scratch/mf91122/UKBimputation/GWAS_results_11072019
+cd /scratch/mf91122/UKBimputation/GWAS_results_11142019
 rmdir * 2>/dev/null
 
 #check if files exist
@@ -54,29 +54,31 @@ for j in ${phenotypes[@]}
 	do
 		for k in ${par[*]}
 			do
-cd /scratch/mf91122/UKBimputation/GWAS_results_11072019
+cd /scratch/mf91122/UKBimputation/GWAS_results_11142019
 #if directory exists then go into that directory
 if [ -d "$j"_par"$k" ]
 	then
 	cd "$j"_par"$k"
 
-	filecount=$(find . -maxdepth 1 -type f | wc -l)
-
+	filecount=$(ls | wc -l)
+	echo filecount for "$j"_par"$k" is "$filecount"
 
 	if [ "$filecount" == 24 ]
 	then
 		echo Combining "${filecount}" files in "$j"_par"$k"
-		#cat * > "$j"_par"$k"_full.assoc.logistic
+		cat * > "$j"_par"$k"_full.assoc.logistic
 	fi	
 	
-	if ([ "$filecount" > 24 ] && [ "$k" == 22 ])
+	if [ "$filecount" > 24 -a "$k" == 22 ]
 	then
+			echo Processing "${filecount}" files in "$j"_par"$k"...
 			awk -F " " '{if ($5=="ADDxweekly_oily_fish")print $0}' "$j"_par22_full.assoc.logistic > \
 				"$j"_par22_fullb.assoc.logistic
         		awk '{print $1,$2,$3,$9}' "$j"_par22_fullb.assoc.logistic > \
 		        	"$j"_par22_fullc.assoc.logistic
-	elif ([ "$filecount" > 24 ] && [ "$k" == 24 ])
+	elif [ "$filecount" > 24 -a "$k" == 24 ]
 	then
+			echo Processing "${filecount}" files in "$j"_par"$k"...
 			awk -F " " '{if ($5=="ADDxfish_oil_initial")print $0}' "$j"_par24_full.assoc.logistic > \
                         	"$j"_par24_fullb.assoc.logistic
                 	awk '{print $1,$2,$3,$9}' "$j"_par24_fullb.assoc.logistic > \
@@ -84,6 +86,11 @@ if [ -d "$j"_par"$k" ]
 	else 
 		echo There are "${filecount}" files in "$j"_par"$k"
 	fi
+
 fi
 done
 done
+
+echo Removing files of size zero...
+cd /scratch/mf91122/UKBimputation/GWAS_results_11142019
+find ./ -size  0 -print0 |xargs -0 rm --
