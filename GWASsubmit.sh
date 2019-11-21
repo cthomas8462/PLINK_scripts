@@ -22,12 +22,14 @@ phenotypes=("Depress_2wk" "breast_cancer" "prostate_cancer" \
 chr=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X XY)
 par=(22 24)
 
-for i in ${chr[*]}
+
+for j in ${phenotypes[@]} 
 	do
-	for j in ${phenotypes[@]} 
+	for k in ${par[*]}
 		do
-		for k in ${par[*]}
+		for i in ${chr[*]}
 			do
+
 
 qsub /work/kylab/share/UKB/scripts_round7_11202019/manyscripts/"$j"_par"$k"_chr"$i".sh
 
