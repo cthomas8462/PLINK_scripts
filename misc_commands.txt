@@ -2,4 +2,5 @@
 
 awk '{if ($5 == "ADDxweekly_oily_fish" && $9 <5e-05) print $0}' brain_cancer_par21_merged.assoc.logistic
 
-
+#get files that match a regex pattern and output them surrounded by quotes
+find . cardiac*chr1.sh |sed -e 's/^/"/g' -e 's/$/"/g'
