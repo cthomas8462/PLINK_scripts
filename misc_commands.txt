@@ -2,6 +2,12 @@
 
 awk '{if ($5 == "ADDxweekly_oily_fish" && $9 <5e-05) print $0}' brain_cancer_par21_merged.assoc.logistic
 
+#print lines where P<0.0000005
+awk '{if ($5 == "ADDxfish_oil_initial" && $9 <5e-07) print $0}' 
+
+#print on multiple position criteria
+awk '{if (($3=="166435621" || $3=="166500185" || $3=="166500348" || $3=="166501613" || $3=="166502418" || $3=="166503040" || $3=="166523117" ) && ($5=="ADDxfish_oil_initial" || $5=="ADD" || $5=="fish_oil_initial" )) print $0}' Depress_2wk_par24_chr2_11_22_2019.assoc.logistic
+
 #get files that match a regex pattern and output them surrounded by quotes
 find . cardiac*chr1.sh |sed -e 's/^/"/g' -e 's/$/"/g'
 
