@@ -4,3 +4,7 @@ awk '{if ($5 == "ADDxweekly_oily_fish" && $9 <5e-05) print $0}' brain_cancer_par
 
 #get files that match a regex pattern and output them surrounded by quotes
 find . cardiac*chr1.sh |sed -e 's/^/"/g' -e 's/$/"/g'
+
+
+#check if two files are identical
+cmp --s Depress_2wk_par22_chr22_11_22_2019_threads.assoc.logistic Depress_2wk_par22_chr22_11_22_2019_threads_py.assoc.logistic || echo "files are different"
