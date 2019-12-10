@@ -26,27 +26,25 @@ possible_dirs<-sprintf("./%s_par%s", eg[,1], eg[,2])
 
 dirs_exist<-possible_dirs[possible_dirs %in% dirs]
 
+filename<-character(0)
 
-numfiles<- 0
-
-#count number of pages necessary
+#Create a table of filenames and which page they belong on.
 for (i in seq_along(dirs_exist)){
 	if(sum(grepl("*fullc.assoc.logistic", list.files(path= dirs_exist[i])))==1){
-		numfiles<-numfiles+1}}
+		filename<-c(filename, paste(dirs_exist[i], "/", grep("*fullc.assoc.logistic", list.files(path= dirs_exist[i]), value = TRUE), sep=""))
+	}}
 
-numpages<-ceiling(numfiles/6)
+filetable<-as.data.frame(filename)
+filetable$numfile<-seq(1:length(filename))
+filetable<-filetable%>%mutate(numpage = ceiling(numfile/6))
 
-##FIX HERE
-
-for (i in seq_along(dirs_exist)){
-	if(sum(grepl("*fullc.assoc.logistic", list.files(path= dirs_exist[i])))==1){
-		filename<-paste(dirs_exist[i], "/", grep("*fullc.assoc.logistic", list.files(path= dirs_exist[i]), value = TRUE), sep="")
-		
-		for (j in seq_along(numpages))){
-			pngfilename=paste("./plotoutput/manhattan", numpages, Sys.Date(), sep="_")
-			png(file=pngfilename)
-			par(mfrow=c(3,2))
-			data<-read.table(filename, header=FALSE, stringsAsFactors=FALSE)
+#Write Manhattan plots, 6 per page.
+for (j in unique(filetable$numpage)){
+	pngfilename=paste("./plotoutput/manhattan", filetable$numpage, Sys.Date(), sep="_")
+	png(file=pngfilename)
+	par(mfrow=c(3,2)
+	for (k in filetable$filename[filetable$numpage==j]){
+		data<-read.table(k, header=FALSE, stringsAsFactors=FALSE)
 			colnames(data)= c("CHR", "SNP", "BP", "P")
 			data[,-2]<-sapply(data[,-2], as.numeric)
 			data<-drop_na(data)
@@ -57,9 +55,8 @@ for (i in seq_along(dirs_exist)){
 				cex.axis = 0.9, col = c("red", "black"), 
 				suggestiveline = -log10(1e-05), genomewideline = -log10(5e-08),
 				chrlabs = c(1:22, "X", "XY") 
-)
-			dev.off()
-			}
-  
-          }}
+		}	
+	dev.off()
+	}
+
 
