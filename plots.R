@@ -49,7 +49,7 @@ for (j in unique(filetable$numpage)){
 			data[,-2]<-sapply(data[,-2], as.numeric)
 			data<-drop_na(data)
 			manhattan(data, 
-				main = paste(filename), 
+				main = paste(k), 
 				ylim = c(0, 10), cex = 0.6, 
 				annotatePval = 0.0000005, annotateTop = FALSE,
 				cex.axis = 0.9, col = c("red", "black"), 
