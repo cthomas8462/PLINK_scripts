@@ -40,7 +40,7 @@ filetable<-filetable%>%mutate(numpage = ceiling(numfile/6))
 
 #Write Manhattan plots, 6 per page.
 for (j in unique(filetable$numpage)){
-	pngfilename=paste("./plotoutput/manhattan", filetable$numpage, Sys.Date(), sep="_")
+	pngfilename=paste("./plotoutput/manhattan", j, Sys.Date(), sep="_")
 	png(file=pngfilename)
 	par(mfrow=c(3,2))
 	for (k in filetable$filename[filetable$numpage==j]){
@@ -51,7 +51,7 @@ for (j in unique(filetable$numpage)){
 			manhattan(data, 
 				main = paste(filename), 
 				ylim = c(0, 10), cex = 0.6, 
-				annotatePval = 0.00001, annotateTop = FALSE,
+				annotatePval = 0.0000005, annotateTop = FALSE,
 				cex.axis = 0.9, col = c("red", "black"), 
 				suggestiveline = -log10(1e-05), genomewideline = -log10(5e-08),
 				chrlabs = c(1:22, "X", "XY") 
@@ -59,3 +59,9 @@ for (j in unique(filetable$numpage)){
 		}	
 	dev.off()
 	}
+
+#for (j in unique(filetable$numpage)){
+#	paste("./plotoutput/manhattan", j, Sys.Date(), sep="_")
+#	for (k in filetable$filename[filetable$numpage==j]){
+#		print(paste(j,k))}}
+
