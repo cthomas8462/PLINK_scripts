@@ -34,9 +34,10 @@ for (i in seq_along(dirs_exist)){
 		filename<-c(filename, paste(dirs_exist[i], "/", grep("*fullc.assoc.logistic", list.files(path= dirs_exist[i]), value = TRUE), sep=""))
 	}}
 
-filetable<-as.data.frame(filename)
+filetable<-as.data.frame(filename, stringsAsFactors = FALSE)
 filetable$numfile<-seq(1:length(filename))
 filetable<-filetable%>%mutate(numpage = ceiling(numfile/6))
+x<-vector(mode = "list", length = length(filename))
 
 #Write Manhattan plots, 6 per page.
 for (j in unique(filetable$numpage)){
@@ -48,6 +49,8 @@ for (j in unique(filetable$numpage)){
 			colnames(data)= c("CHR", "SNP", "BP", "P")
 			data[,-2]<-sapply(data[,-2], as.numeric)
 			data<-drop_na(data)
+			#extract significant SNPs here (P<0.0000005)
+			x[k]<- data %>% filter(P<0.0000005) %>% mutate(phenotype = paste(k))
 			manhattan(data, 
 				main = paste(k), 
 				ylim = c(0, 10), cex = 0.6, 
@@ -59,6 +62,8 @@ for (j in unique(filetable$numpage)){
 		}	
 	dev.off()
 	}
+
+write.csv(unlist(x), "test.csv")
 
 #for (j in unique(filetable$numpage)){
 #	paste("./plotoutput/manhattan", j, Sys.Date(), sep="_")
