@@ -59,12 +59,3 @@ for (j in unique(filetable$numpage)){
 		}	
 	dev.off()
 	}
-
-
-
-				  
-				  
-				  
-for (j in unique(filetable$numpage)){
-	for (k in filetable$filename[filetable$numpage==j]){
-		print(j,k)}}
