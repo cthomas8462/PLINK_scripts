@@ -42,7 +42,7 @@ filetable<-filetable%>%mutate(numpage = ceiling(numfile/6))
 for (j in unique(filetable$numpage)){
 	pngfilename=paste("./plotoutput/manhattan", filetable$numpage, Sys.Date(), sep="_")
 	png(file=pngfilename)
-	par(mfrow=c(3,2)
+	par(mfrow=c(3,2))
 	for (k in filetable$filename[filetable$numpage==j]){
 		data<-read.table(k, header=FALSE, stringsAsFactors=FALSE)
 			colnames(data)= c("CHR", "SNP", "BP", "P")
@@ -55,8 +55,16 @@ for (j in unique(filetable$numpage)){
 				cex.axis = 0.9, col = c("red", "black"), 
 				suggestiveline = -log10(1e-05), genomewideline = -log10(5e-08),
 				chrlabs = c(1:22, "X", "XY") 
+			)
 		}	
 	dev.off()
 	}
 
 
+
+				  
+				  
+				  
+for (j in unique(filetable$numpage)){
+	for (k in filetable$filename[filetable$numpage==j]){
+		print(j,k)}}
