@@ -15,3 +15,15 @@ find . cardiac*chr1.sh |sed -e 's/^/"/g' -e 's/$/"/g'
 
 #check if two files are identical
 cmp --s Depress_2wk_par22_chr22_11_22_2019_threads.assoc.logistic Depress_2wk_par22_chr22_11_22_2019_threads_py.assoc.logistic || echo "files are different"
+
+##====================================================
+#create snp list for those that have >=0.5 imp quality
+cd /work/kylab/mike/UKB/quality-scores/mfi
+
+chr=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X XY)
+
+for i in ${chr[*]}
+	do
+
+awk '{if ($8 >=0.5) print $2}' ukb_mfi_chr"$i"_v3.txt > ukb_mfi_keepsnps_chr"$i".txt
+##===================================================
