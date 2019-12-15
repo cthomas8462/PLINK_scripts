@@ -6,7 +6,7 @@
 #PBS -l mem=5gb
 
 
-cd /work/kylab/share/UKB/scripts_round8_12132019
+cd /work/kylab/mike/UKB/scripts_round8_12132019
 
 phenotypes=("Depress_2wk" "breast_cancer" "prostate_cancer" \ 
 "LI_colorectal_cancer" "colon_sigmoid_cancer" "liver_cancer" \ 
@@ -26,7 +26,7 @@ for j in ${phenotypes[@]}
 		do
 
 
-qsub /work/kylab/share/UKB/scripts_round8_12132019/manyscripts/"$j"_par"$k".sh
+qsub /work/kylab/mike/UKB/scripts_round8_12132019/manyscripts/"$j"_par"$k"_plink2.sh
 
 done
 done
