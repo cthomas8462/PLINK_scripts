@@ -33,21 +33,20 @@ for j in ${phenotypes[@]}
 echo "#PBS -S /bin/bash
 #PBS -q batch
 #PBS -N GWAS_"$j"_par"$k"
-#PBS -l nodes=2:ppn=4
+#PBS -l nodes=2:ppn=16
 #PBS -l walltime=30:00:00:00
 #PBS -l mem=10gb
 
 module load PLINK/2.00-alpha2-x86_64-20191128
-cd /work/kylab/share/UKB/scripts_round8_12132019
-
+cd /work/kylab/mike/UKB/scripts_round8_12132019
 
 chr=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X XY)
-for i in ${chr[*]}
+for i in \${chr[@]}
         do
 
 
 plink2 \
---pfile /scratch/mf91122/UKBimputation/filtered_plink2_pfile_imputation/plink-filtered-chr"$i" \
+--pfile /scratch/mf91122/UKBimputation/filtered_plink2_pfile_imputation/plink-filtered-chr? \
 --pheno /work/kylab/mike/UKB/pheno/pheno_11142019.txt \
 --pheno-name $j \
 --1 \
@@ -62,10 +61,16 @@ PCA1, PCA2, PCA3, PCA4, PCA5, PCA6, PCA7, PCA8, PCA9, PCA10, statins \
 --parameters 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,$k \
 --tests 1,19 \
 --allow-extra-chr \
---out /scratch/mf91122/UKBimputation/8.GWAS_results_12142019/chr"$i"_par"$k"_"$now"
+--out /scratch/mf91122/UKBimputation/8.GWAS_results_12142019/chr?_par"$k"_"$now"
 
 done
 " > /work/kylab/mike/UKB/scripts_round8_12132019/manyscripts/"$j"_par"$k"_plink2.sh
 
 done
+done
+
+for file in /work/kylab/mike/UKB/scripts_round8_12132019/manyscripts/*
+do
+
+sed -i 's/?/"$i"/g' $file
 done
