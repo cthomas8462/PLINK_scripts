@@ -1,3 +1,13 @@
+##Here is a script header=======
+#PBS -S /bin/bash
+#PBS -q ye_q
+#PBS -N misc_commands
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=30:00:00:00
+#PBS -l mem=5gb
+##========================
+
+
 #print lines where interaction term is less than a threshhold
 
 awk '{if ($5 == "ADDxweekly_oily_fish" && $9 <5e-05) print $0}' brain_cancer_par21_merged.assoc.logistic
@@ -27,3 +37,17 @@ for i in ${chr[*]}
 
 awk '{if ($8 >=0.5) print $2}' ukb_mfi_chr"$i"_v3.txt > ukb_mfi_keepsnps_chr"$i".txt
 ##===================================================
+
+
+#extract significant snps from files===================
+
+cd /scratch/mf91122/UKBimputation/8.GWAS_results_12142019
+
+for file in /scratch/mf91122/UKBimputation/8.GWAS_results_12142019/*
+do
+	awk '{if (($7=="ADDxweekly_oily_fish" || $7=="ADDxfish_oil_initial") && ($12 <=5e-07)) print $0, $(NF+1)=FILENAME}' $file >> \
+	significant.txt
+done
+#======================================================
+
+
