@@ -22,6 +22,8 @@ awk '{if (($3=="166435621" || $3=="166500185" || $3=="166500348" || $3=="1665016
 awk '{if (($3=="rs58542926") && ($7=="ADDxweekly_oily_fish" || $7=="ADD" || $7=="weekly_oily_fish" )) print $0}' linear/chr19_par22_12_16_2019.LDL.glm.linear
 
 
+awk {'if (($12<5e-07) && ($7=="ADDxWOF1" || $7=="ADDxWOF2" || $7=="ADDxWOF3" || $7=="ADDxWOF4" || $7=="ADDxWOF5")) print $0}' chr19_WOF-ordinal_2_12_18_2019.LDL.glm.linear 
+
 #get files that match a regex pattern and output them surrounded by quotes
 find . cardiac*chr1.sh |sed -e 's/^/"/g' -e 's/$/"/g'
 
