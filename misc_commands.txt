@@ -59,4 +59,9 @@ do
 done
 #======================================================
 
+#replace TRUES with 1's only in one column
+
+awk '{gsub("TRUE", "1", $60)}1' covar24_12192019.txt >temporary.txt
+awk '{gsub("FALSE", "0", $60)}1' temporary.txt >covar24_01042020.txt
+
 
