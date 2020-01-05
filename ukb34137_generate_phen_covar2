@@ -1,4 +1,4 @@
-setwd("/Users/calvin/Desktop/MF/R_files/")
+setwd("/Users/yelab/Documents/R_files/")
 source('ukb34137_loaddata.r') #generates bd (UKB dataset)
 library(plyr)
 library(dplyr)
@@ -8,26 +8,26 @@ bd_new <- read.table("ukb37330.tab",
 bd_newer<- read.table("ukb38039.tab",
                       header=TRUE, sep="\t")
 
-# Find 24HR people only. This code works-----------------------------------
-# daycols<-c("f.20080.0.0", "f.20080.1.0", "f.20080.2.0", 
-#            "f.20080.3.0", "f.20080.4.0")
-# bd1<-bd
-# #Change all the values to characters for easier manipulation
-# bd1<-apply(bd1[,daycols], 2, as.character)
-# #Change NA's to zeros and days to 1's
-# bd1[(is.na(bd1[,daycols]))]<-0
-# bd1[bd1[,daycols]!="0"] <-1
-# #Change these back to numeric
-# bd1<-apply(bd1[,daycols], 2, as.integer)
-# #Now make a new column, everyone with rowSums zero write FALSE
-# #and those with >0 write TRUE
-# sum<-apply(bd1[,daycols], 1, sum)
-# bd1<-as.data.frame(bd1)
-# bd1<-bd1 %>% mutate (took_24HR = sum)
-# bd1<-bd1%>% mutate(took_24HR = replace(took_24HR, took_24HR>0, "Yes")) %>%
-#     mutate(took_24HR = replace(took_24HR, took_24HR==0, "No"))
-# sum(bd1$took_24HR=="Yes") #[1] 211018 **SUCCESS**
-
+# Find 24HR people only/make new table called bd1 --------------------
+daycols<-c("f.20080.0.0", "f.20080.1.0", "f.20080.2.0",
+           "f.20080.3.0", "f.20080.4.0")
+bd1<-bd
+#Change all the values to characters for easier manipulation
+bd1<-apply(bd1[,daycols], 2, as.character)
+#Change NA's to zeros and days to 1's
+bd1[(is.na(bd1[,daycols]))]<-0
+bd1[bd1[,daycols]!="0"] <-1
+#Change these back to numeric
+bd1<-apply(bd1[,daycols], 2, as.integer)
+#Now make a new column, everyone with rowSums zero write FALSE
+#and those with >0 write TRUE
+sum<-apply(bd1[,daycols], 1, sum)
+bd1<-as.data.frame(bd1)
+bd1<-bd1 %>% mutate (took_24HR = sum)
+bd1<-bd1%>% mutate(took_24HR = replace(took_24HR, took_24HR>0, "Yes")) %>%
+    mutate(took_24HR = replace(took_24HR, took_24HR==0, "No"))
+sum(bd1$took_24HR=="Yes") #[1] 211018 **SUCCESS**
+bd1$FID<-bd$f.eid
 
 
 
@@ -195,6 +195,8 @@ max_unrelated<-read.table("ukb48818_rel_s488282_output.dat")
 max_unrelated<-as.integer(unlist(max_unrelated))
 bd_pheno<-bd_pheno%>%filter(!FID %in% max_unrelated)
 bd_pheno
+#310,998 ppts
+
 
 # Finalize/write  pheno file -----------------------------------------
 
@@ -209,6 +211,29 @@ bd_pheno<-bd_pheno%>%select(FID, IID, Sex, everything())
 write.table(bd_pheno, file= "pheno_11142019.txt", row.names = FALSE, 
             quote = FALSE)
 
+# # Make phenotype files filtered by interaction terms ------------
+# 
+# #Load most recent pheno file
+# pheno_raw<-read.table("pheno_11142019.txt", header = TRUE,
+#                       stringsAsFactors = FALSE)
+# pheno_raw<-as_tibble(pheno_raw)
+# pheno_raw
+# 
+# covar_raw<-read.table("covar_11042019.txt", header=TRUE, 
+#                       stringsAsFactors = FALSE)
+# covar_raw<-as_tibble(covar_raw)
+# covar_fish<-covar_raw%>%select(FID, IID, weekly_oily_fish, fish_oil_initial)
+# covar_fish
+# pheno_fish<-left_join(pheno_raw, covar_fish, by=c("FID", "IID"))
+# pheno_FO<-pheno_fish%>%filter(fish_oil_initial == 1)
+# pheno_noFO<-pheno_fish%>%filter(fish_oil_initial == 0)
+# 
+# pheno_FO
+# pheno_noFO
+# write.table(pheno_FO, file= "pheno_FO_12112019.txt", row.names = FALSE, 
+#             quote = FALSE)
+# write.table(pheno_noFO, file= "pheno_noFO_12112019.txt", row.names = FALSE, 
+#             quote = FALSE)
 
 #================================================================ #
 #================================================================ #
@@ -272,9 +297,9 @@ bd_temp<-bd%>%
         sapply(bd[,fish_oil_cols],
                function(x) grepl("Fish oil", x, ignore.case = TRUE)
         ))>0
-    ) %>% select(Fish_Oil_Supp)
+    ) %>% select(f.eid, Fish_Oil_Supp)
 
-
+sum(bd_temp$Fish_Oil_Supp)
 
 
 bd_covar$fish_oil_24HR<-bd_temp$Fish_Oil_Supp
@@ -348,7 +373,6 @@ bd_covar$avg_oily_fish_servings<-
 bd_covar$fish_oil_initial<-mapvalues(bd_covar$fish_oil_initial, 
                                   c(TRUE, FALSE), c(1, 0))
 
-#Add statins
 
 
 
@@ -361,7 +385,7 @@ colnames(PCA)<-c("FID", sprintf("PCA%s", 1:40))
 
 bd_covar<-bd_covar %>% inner_join(PCA, by= "FID")
 
-
+#plot(sapply(bd_covar[,8:17], function(x){sum(abs(x), na.rm=TRUE)}))
 
 
 #Filter by people who took 24HR only----------------------------------
@@ -416,5 +440,197 @@ covar
 
 write.table(covar, file= "covar_11042019.txt", 
             row.names = FALSE, quote = FALSE)
+
+
+# Turn the ordinal var avg oily fish into dummy variables -------
+
+covar_raw<-read.table("covar_11042019.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+covar<-as_tibble(covar_raw)
+
+table(covar$weekly_oily_fish)
+covar
+
+covar$WOF1<-0
+covar$WOF2<-0
+covar$WOF3<-0
+covar$WOF4<-0
+covar$WOF5<-0
+
+covar$WOF1[covar$weekly_oily_fish==1]<-1
+covar$WOF2[covar$weekly_oily_fish==2]<-1
+covar$WOF3[covar$weekly_oily_fish==3]<-1
+covar$WOF4[covar$weekly_oily_fish==4]<-1
+covar$WOF5[covar$weekly_oily_fish==5]<-1
+#check: sapply(covar[,52:56], sum)
+
+covar
+covarb<-sapply(covar, mapvalues, -9, NA)
+head(covarb)
+head(as.data.frame(covarb))
+
+write.table(covarb, file= "covarb_12182019.txt", 
+            row.names = FALSE, quote = FALSE)
+
+quantile(covar$BMI, na.rm = TRUE)
+?quantile
+
+covar$BMIq<-0
+covar$BMIq[covar$BMI>=12.1212 & covar$BMI<24.1447]<-0
+covar$BMIq[covar$BMI>=24.1447 & covar$BMI<26.7330]<-1
+covar$BMIq[covar$BMI>=26.7330 & covar$BMI<29.8845]<-2
+covar$BMIq[covar$BMI>=29.8845 & covar$BMI<100]<-3
+covar$BMIq[is.na(covar$BMI)]<-"NA"
+
+
+covar$AgeT<-(covar$Age-38)
+
+write.table(covar, file= "covart_12182019.txt", 
+            row.names = FALSE, quote = FALSE)
+
+
+
+# 12-19-2019 ----------------------------------------------------
+
+covar_raw<-read.table("covart_12182019.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+covar<-as_tibble(covar_raw)
+
+pheno_raw<-read.table("pheno_11142019.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+
+pheno<-as_tibble(pheno_raw)
+head(bd1)
+took24<-bd1%>%select(FID, took_24HR)
+pheno<-left_join(pheno,took24, by='FID')
+pheno24<-pheno%>%filter(took_24HR=="Yes")
+head(as.data.frame(pheno24), 50)
+
+write.table(pheno24, file= "pheno24_12192019.txt", 
+            row.names = FALSE, quote = FALSE)
+
+
+# this section was fixed in unix 1-4-2020 to change T/F to 1/0 because apparently that didn't work here ---------------------------------------
+
+covar_raw<-read.table("covart_12182019.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+covar<-as_tibble(covar_raw)
+covar<-left_join(covar,took24, by='FID')
+covar24<-covar%>%filter(took_24HR=="Yes")
+
+covar24f<-left_join(covar24, bd_temp, by=c('FID'='f.eid'))
+sum(covar24f$Fish_Oil_Supp) #check if this is right--later
+
+compare<-covar24f%>%select(FID, fish_oil_initial, Fish_Oil_Supp)
+nrow(compare[compare$fish_oil_initial==1 & compare$Fish_Oil_Supp==TRUE,])
+#[1] 16948
+nrow(compare[compare$fish_oil_initial==0 & compare$Fish_Oil_Supp==FALSE,])
+#[1] 91302
+nrow(compare[compare$fish_oil_initial==0 & compare$Fish_Oil_Supp==TRUE,])
+#[1] 38219
+nrow(compare[compare$fish_oil_initial==1 & compare$Fish_Oil_Supp==FALSE,])
+#[1] 41202
+
+
+covar24f$fish<-(-9)
+covar24f$fish[covar24f$fish_oil_initial==1 & covar24f$Fish_Oil_Supp==TRUE]<-1
+covar24f$fish[covar24f$fish_oil_initial==0 & covar24f$Fish_Oil_Supp==FALSE]<-0
+
+covar24f<-covar24f%>%filter(fish != (-9))
+
+write.table(covar24f, file= "covar24_12192019.txt", 
+            row.names = FALSE, quote = FALSE)
+
+# covar24f$totalfish<-(covar24f$weekly_oily_fish)
+# covar24f$totalfish<-covar24f$totalfish/7
+# covar24f$totalfish<-rowSums(covar24f[,c("totalfish", "fish")])
+
+write.table(covar24f, file= "covar24b_12192019.txt", 
+            row.names = FALSE, quote = FALSE)
+
+
+# Not 24h people, yes combined fish score -----------------------
+
+covar_raw<-read.table("covart_12182019.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+covar<-as_tibble(covar_raw)
+# covar$totalfish<-(covar$weekly_oily_fish)
+# covar$totalfish[covar$totalfish==-9]<-NA
+# covar$totalfish<-covar$totalfish/7
+# covar$totalfish<-rowSums(covar[,c("totalfish", "fish_oil_initial")])
+# range(covar$totalfish, na.rm = TRUE)
+
+write.table(covar, file= "covar_12202019.txt", 
+            row.names = FALSE, quote = FALSE)
+
+
+# Add more depression categories to phenotype24 file 01-05-2020-------
+
+pheno_raw<-read.table("pheno24_12192019.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+
+pheno<-as_tibble(pheno_raw)
+ukb <- read.table("ukb34137.tab", header=TRUE, sep="\t")
+
+D<-data.frame(ukb$f.eid, ukb$f.20126)
+head(D)
+D$ukb.f.20126<-mapvalues(D$ukb.f.20126, c(1,2,3,4,5), c(1,1,1,1,1))
+colnames(D)<-c("FID", "majdep_or_bipol")
+D$majdep_or_bipol<-replace_na(D$majdep_or_bipol, "-9")
+
+pheno<-left_join(pheno, D, by="FID")
+table(pheno$majdep_or_bipol) #not using because there are only 
+#~50,000 indiv. with values which will be even less after PLINK QC
+
+
+# Add covariates ------------------------------------------------
+
+ukb <- read.table("ukb34137.tab", header=TRUE, sep="\t")
+
+covar_raw<-read.table("covar24_01042020.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+covar<-as_tibble(covar_raw)
+covar
+
+depmed<-c("f.eid", "f.20546.0.1", "f.20546.0.2", "f.20546.0.3")
+
+d<-ukb[,depmed]
+
+#d[(is.na(d[,depmed]))]<-(0)
+d<-as_tibble(d)
+d
+d<-as.data.frame(sapply(d, mapvalues, c(1,3,4,-818), c(0,1,0,NA)))
+d
+
+d$sum<-d%>%select(f.20546.0.1, f.20546.0.2, f.20546.0.3)%>% mutate(sum = rowSums(., na.rm=TRUE))%>%select(sum)
+sum(d$sum)
+#[1] 37481
+d<-d%>%select(f.eid, sum)
+colnames(d)<-c("FID","Depress_meds")
+head(d)
+sum(d$Depress_meds)
+#join
+covar<-left_join(covar, d, by="FID")
+table(covar$Depress_meds)
+
+write.table(covar, file= "covar24_01042020b.txt", 
+            row.names = FALSE, quote = FALSE)
+
+
+# Check numbers 01-05-2020--------------------------------------------
+
+covar_raw<-read.table("covar24_01042020b.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+
+covar<-as_tibble(covar_raw)
+
+pheno_raw<-read.table("pheno24_12192019.txt", header=TRUE,
+                      stringsAsFactors = FALSE)
+
+pheno<-as_tibble(pheno_raw)
+
+pheno
+covar
+join<-left_join(covar, pheno, by="FID")
 
 
