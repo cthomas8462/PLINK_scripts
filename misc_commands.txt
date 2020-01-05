@@ -64,4 +64,5 @@ done
 awk '{gsub("TRUE", "1", $60)}1' covar24_12192019.txt >temporary.txt
 awk '{gsub("FALSE", "0", $60)}1' temporary.txt >covar24_01042020.txt
 
-
+#1-5-20
+awk '{if (($7=="ADDxFish_Oil_Supp") && ($12 <=5e-07)) print $0}' chr16_par35_01_04_2020.cardiac.5.glm.logistic 
