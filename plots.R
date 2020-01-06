@@ -6,20 +6,21 @@ library(qqman)
 library(plyr)
 library(tidyverse)
 
-setwd("/scratch/mf91122/UKBimputation/GWAS_results_11222019")
+setwd("/scratch/mf91122/UKBimputation/11.GWAS-results_01-04-2020_FO_24_std")
 
 dirs<-list.dirs(path = ".")
 
 phenotypes<-c("Depress_2wk", "breast_cancer", "prostate_cancer",
 "LI_colorectal_cancer", "colon_sigmoid_cancer", "liver_cancer",
 "brain_cancer", "squamous_cell", "inflam_bowel", "crohns",
-"rhematoid_arth", "cardiac.1",
+"rhematoid_arth", "T2D", "cardiac.1",
 "cardiac.2", "cardiac.3", "cardiac.4", "cardiac.5", "cardiac.6", 
 "cardiac.7", "cardiac.8", "cardiac.9", "cardiac.10", "cardiac.11", 
 "cardiac.12", "cardiac.13", "cardiac.14", "cardiac.15", "cardiac.16",
-"cardiac.17", "cardiac.18", "cardiac.19", "cardiac.20", "cardiac.21")
+"cardiac.17", "cardiac.18", "cardiac.19", "cardiac.20", "cardiac.21",
+"LDL", "TAGs", "Tot_Chol")
 
-par<-c("22", "24")
+par<-c("35")
 
 eg<-expand.grid(phenotypes, par)
 possible_dirs<-sprintf("./%s_par%s", eg[,1], eg[,2])
@@ -30,8 +31,8 @@ filename<-character(0)
 
 #Create a table of filenames and which page they belong on.
 for (i in seq_along(dirs_exist)){
-	if(sum(grepl("*fullc.assoc.logistic", list.files(path= dirs_exist[i])))==1){
-		filename<-c(filename, paste(dirs_exist[i], "/", grep("*fullc.assoc.logistic", list.files(path= dirs_exist[i]), value = TRUE), sep=""))
+	if(sum(grepl("*fullc", list.files(path= dirs_exist[i])))==1){
+		filename<-c(filename, paste(dirs_exist[i], "/", grep("*fullc", list.files(path= dirs_exist[i]), value = TRUE), sep=""))
 	}}
 
 filetable<-as.data.frame(filename, stringsAsFactors = FALSE)
@@ -50,7 +51,7 @@ for (j in unique(filetable$numpage)){
 			data[,-2]<-sapply(data[,-2], as.numeric)
 			data<-drop_na(data)
 			#extract significant SNPs here (P<0.0000005)
-			x[k]<- data %>% filter(P<0.0000005) %>% mutate(phenotype = paste(k))
+			x[[k]]<- data %>% filter(P<0.0000005) %>% mutate(phenotype = paste(k))
 			manhattan(data, 
 				main = paste(k), 
 				ylim = c(0, 10), cex = 0.6, 
@@ -64,9 +65,3 @@ for (j in unique(filetable$numpage)){
 	}
 
 write.csv(unlist(x), "test.csv")
-
-#for (j in unique(filetable$numpage)){
-#	paste("./plotoutput/manhattan", j, Sys.Date(), sep="_")
-#	for (k in filetable$filename[filetable$numpage==j]){
-#		print(paste(j,k))}}
-
