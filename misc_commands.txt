@@ -66,3 +66,9 @@ awk '{gsub("FALSE", "0", $60)}1' temporary.txt >covar24_01042020.txt
 
 #1-5-20
 awk '{if (($7=="ADDxFish_Oil_Supp") && ($12 <=5e-07)) print $0}' chr16_par35_01_04_2020.cardiac.5.glm.logistic 
+
+#doing the processing manually
+cat * > Depress_2wk_par35.full
+awk -F " " '{if ($7=="ADDxfish")print $0}' Depress_2wk_par35.full >fullb
+awk '{print $1,$3,$2,$12}' fullb > Depress_2wk_par35.fullc
+
