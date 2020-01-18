@@ -69,6 +69,6 @@ awk '{if (($7=="ADDxFish_Oil_Supp") && ($12 <=5e-07)) print $0}' chr16_par35_01_
 
 #doing the processing manually
 cat * > Depress_2wk_par35.full
-awk -F " " '{if ($7=="ADDxfish")print $0}' Depress_2wk_par35.full >fullb
+awk -F " " '{if ($7=="ADDxfish")print $0}' Depress_2wk_par35.full >fullb #Or ADDxUSER_2DF
 awk '{print $1,$3,$2,$12}' fullb > Depress_2wk_par35.fullc
 
