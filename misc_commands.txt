@@ -60,6 +60,11 @@ do
 	awk '{if (($7=="ADDxweekly_oily_fish" || $7=="ADDxfish_oil_initial") && ($12 <=5e-07)) print $0, $(NF+1)=FILENAME}' $file >> \
 	significant.txt
 done
+
+#for one folder
+awk '{if (($7=="ADDxfish" || $7=="USER_2DF") && ($12 <=5e-05)) print $0}' full >>signficant.txt
+
+
 #======================================================
 
 #replace TRUES with 1's only in one column
